@@ -1,14 +1,23 @@
 use std::ops::{Add, Div, Sub};
 
 trait Contains<T> {
-    fn contains(self, obj: T) -> bool;
+    fn contains(&self, obj: T) -> bool;
 }
 
 
-#[derive(PartialEq, PartialOrd)]
-struct Point {
-    x: u32,
-    y: u32,
+#[derive(PartialEq, PartialOrd, Copy, Clone)]
+pub struct Point {
+    pub x: u32,
+    pub y: u32,
+}
+
+impl From<(u32, u32)> for Point {
+    fn from(value: (u32, u32)) -> Self {
+        Point {
+            x: value.0,
+            y: value.1,
+        }
+    }
 }
 
 impl Add for Point {
@@ -33,7 +42,7 @@ impl Sub for Point {
 
 impl Div<u32> for Point {
     type Output = Point;
-    fn div(self, rhs: u32) -> Self {
+    fn div(self, rhs: u32) -> Self::Output {
         Point {
             x: self.x / rhs,
             y: self.y / rhs,
@@ -48,29 +57,33 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    fn new(min: Point, max: Point) -> Self {
+    pub fn new(min: Point, max: Point) -> Self {
         assert!(min <= max);
 
-        BoundingBox{
-            min,
-            max,
-        }
+        BoundingBox { min, max }
     }
 
-    fn center(self) -> Point {
+    pub fn min(&self) -> &Point {
+        &self.min
+    }
+
+    pub fn max(&self) -> &Point {
+        &self.max
+    }
+
+    pub fn center(&self) -> Point {
         (self.min + self.max) / 2
     }
 }
 
 impl Contains<Point> for BoundingBox {
-    fn contains(self, p: Point) -> bool {
-        (self.min.x <= p.x) && (p.x <= self.max.x)
-            && (self.min.y <= p.y) && (p.y <= self.max.y)
+    fn contains(&self, p: Point) -> bool {
+        (self.min.x <= p.x) && (p.x <= self.max.x) && (self.min.y <= p.y) && (p.y <= self.max.y)
     }
 }
 
 impl Contains<BoundingBox> for BoundingBox {
-    fn contains(self, b: BoundingBox) -> bool {
+    fn contains(&self, b: BoundingBox) -> bool {
         self.contains(b.min) && self.contains(b.max)
     }
 }
