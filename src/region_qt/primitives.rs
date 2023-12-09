@@ -1,14 +1,14 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Div, Sub};
 
-pub struct Point {
-    x: u32,
-    y: u32,
+trait Contains<T> {
+    fn contains(self, obj: T) -> bool;
 }
 
-impl Point {
-    fn l1(p1: Self, p2: Self) -> u32 {
-        (p2.x - p1.x + p2.y - p1.y).abs()
-    }
+
+#[derive(PartialEq, PartialOrd)]
+struct Point {
+    x: u32,
+    y: u32,
 }
 
 impl Add for Point {
@@ -31,6 +31,16 @@ impl Sub for Point {
     }
 }
 
+impl Div<u32> for Point {
+    type Output = Point;
+    fn div(self, rhs: u32) -> Self {
+        Point {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}
+
 /// A bounding box is a rectangle that is defined by its bottom-left corner and its width and height.
 pub struct BoundingBox {
     min: Point,
@@ -39,6 +49,8 @@ pub struct BoundingBox {
 
 impl BoundingBox {
     fn new(min: Point, max: Point) -> Self {
+        assert!(min <= max);
+
         BoundingBox{
             min,
             max,
@@ -48,5 +60,17 @@ impl BoundingBox {
     fn center(self) -> Point {
         (self.min + self.max) / 2
     }
+}
 
+impl Contains<Point> for BoundingBox {
+    fn contains(self, p: Point) -> bool {
+        (self.min.x <= p.x) && (p.x <= self.max.x)
+            && (self.min.y <= p.y) && (p.y <= self.max.y)
+    }
+}
+
+impl Contains<BoundingBox> for BoundingBox {
+    fn contains(self, b: BoundingBox) -> bool {
+        self.contains(b.min) && self.contains(b.max)
+    }
 }
