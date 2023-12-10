@@ -1,6 +1,7 @@
 use std::ops::{Add, Div, Sub};
 
 trait Contains<T> {
+    /// Return true if the object is contained in the region.
     fn contains(&self, obj: T) -> bool;
 }
 
@@ -70,7 +71,8 @@ impl BoundingBox {
     pub fn max(&self) -> &Point {
         &self.max
     }
-
+    
+    /// Return the center of the bounding box.
     pub fn center(&self) -> Point {
         (self.min + self.max) / 2
     }

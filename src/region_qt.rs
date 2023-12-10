@@ -179,6 +179,14 @@ impl RegionQt {
         
         self.root.as_mut().unwrap().update(&img);
     }
+    
+    pub fn write(&self) {
+        unimplemented!();
+    }
+    
+    pub fn read(&mut self) {
+        unimplemented!();
+    }
 }
 
 #[cfg(test)]
