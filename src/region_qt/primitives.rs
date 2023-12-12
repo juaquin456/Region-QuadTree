@@ -5,7 +5,6 @@ trait Contains<T> {
     fn contains(&self, obj: T) -> bool;
 }
 
-
 #[derive(PartialEq, PartialOrd, Copy, Clone)]
 pub struct Point {
     pub x: u32,
@@ -71,7 +70,7 @@ impl BoundingBox {
     pub fn max(&self) -> &Point {
         &self.max
     }
-    
+
     /// Return the center of the bounding box.
     pub fn center(&self) -> Point {
         (self.min + self.max) / 2

@@ -1,5 +1,5 @@
-use image::{DynamicImage, GenericImageView, Rgba};
 use image::io::Reader as ImageReader;
+use image::{DynamicImage, GenericImageView, Rgba};
 
 use primitives::BoundingBox;
 
@@ -51,7 +51,7 @@ impl RegionNodeQt {
             children: [None, None, None, None],
         }
     }
-    
+
     /// Initialize the children of the node.
     ///
     /// # Note
@@ -63,23 +63,17 @@ impl RegionNodeQt {
             Point::from((self.bounding.min().x, center.y)),
             Point::from((center.x, self.bounding.max().y)),
         )));
-        
-        self.children[1] = Some(Box::new(RegionNodeQt::new(
-            center,
-            *self.bounding.max(),
-        )));
-        
-        self.children[2] = Some(Box::new(RegionNodeQt::new(
-            *self.bounding.min(),
-            center,
-        )));
-        
+
+        self.children[1] = Some(Box::new(RegionNodeQt::new(center, *self.bounding.max())));
+
+        self.children[2] = Some(Box::new(RegionNodeQt::new(*self.bounding.min(), center)));
+
         self.children[3] = Some(Box::new(RegionNodeQt::new(
             Point::from((center.x, self.bounding.min().y)),
             Point::from((self.bounding.max().x, center.y)),
         )))
     }
-    
+
     /// Check if the node is a leaf.
     ///
     /// # Return
@@ -93,7 +87,7 @@ impl RegionNodeQt {
         }
         true
     }
-    
+
     /// Calculate the color of the node if exists only one color in the bounding box. Otherwise, the color is `Color::Gray`.
     ///
     /// # Arguments
@@ -106,9 +100,9 @@ impl RegionNodeQt {
     fn calculate_color(&self, img: &DynamicImage) -> Color {
         let xl = self.bounding.min().x;
         let yl = self.bounding.min().y;
-        
+
         let current_color = get_color(img, (xl, yl));
-        
+
         for x in xl..self.bounding.max().x {
             for y in self.bounding.min().y..self.bounding.max().y {
                 let next_color = get_color(img, (x, y));
@@ -119,7 +113,7 @@ impl RegionNodeQt {
         }
         current_color
     }
-    
+
     /// Update the color of the node.
     ///
     /// # Arguments
@@ -140,7 +134,9 @@ impl RegionNodeQt {
                     }
                 }
             }
-            _ => { self.data = color; }
+            _ => {
+                self.data = color;
+            }
         }
     }
 }
@@ -154,7 +150,7 @@ impl RegionQt {
     pub fn new() -> Self {
         RegionQt { root: None }
     }
-    
+
     /// Build the region quadtree.
     ///
     /// # Arguments
@@ -172,34 +168,41 @@ impl RegionQt {
     /// tree.build("src/Untitled.png");
     /// ```
     pub fn build(&mut self, path: &str) {
-        let img = ImageReader::open(path).expect("Can't open the file").decode().unwrap();
+        let img = ImageReader::open(path)
+            .expect("Can't open the file")
+            .decode()
+            .unwrap();
         let dim = img.dimensions();
-        
-        self.root = Some(Box::new(RegionNodeQt::new(Point::from((0, 0)), Point::from(dim))));
-        
+
+        self.root = Some(Box::new(RegionNodeQt::new(
+            Point::from((0, 0)),
+            Point::from(dim),
+        )));
+
         self.root.as_mut().unwrap().update(&img);
     }
-    
+
     pub fn write(&self) {
         unimplemented!();
     }
-    
+
     pub fn read(&mut self) {
         unimplemented!();
     }
-    
-    pub fn plot(&self) {
-    
-    }
+
+    pub fn plot(&self) {}
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test1() {
-        let img = ImageReader::open("src/Untitled.png").expect("Can't open the file").decode().unwrap();
+        let img = ImageReader::open("src/Untitled.png")
+            .expect("Can't open the file")
+            .decode()
+            .unwrap();
         get_color(&img, (0, 9));
     }
 }
