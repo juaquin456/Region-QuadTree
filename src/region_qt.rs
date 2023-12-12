@@ -168,7 +168,7 @@ impl RegionQt {
     /// # Example
     ///
     /// ```
-    /// let mut tree = region_qt::RegionQt::new();
+    /// let mut tree = region_quadtree::RegionQt::new();
     /// tree.build("src/Untitled.png");
     /// ```
     pub fn build(&mut self, path: &str) {
@@ -186,6 +186,10 @@ impl RegionQt {
     
     pub fn read(&mut self) {
         unimplemented!();
+    }
+    
+    pub fn plot(&self) {
+    
     }
 }
 
