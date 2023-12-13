@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn test1() {
-        let img = ImageReader::open("src/Untitled.png")
+        let img = ImageReader::open("img/Untitled.png")
             .expect("Can't open the file")
             .decode()
             .unwrap();
