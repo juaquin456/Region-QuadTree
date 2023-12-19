@@ -87,7 +87,7 @@ impl RegionNodeQt {
     /// `true` if the node is a leaf, `false` otherwise.
     fn is_leaf(&self) -> bool {
         for i in 0..4 {
-            if !self.children[i].is_none() {
+            if self.children[i].is_some() {
                 return false;
             }
         }
