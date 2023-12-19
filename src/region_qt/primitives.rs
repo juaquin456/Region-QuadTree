@@ -1,11 +1,12 @@
 use std::ops::{Add, Div, Sub};
+use serde::{Deserialize, Serialize};
 
 trait Contains<T> {
     /// Return true if the object is contained in the region.
     fn contains(&self, obj: T) -> bool;
 }
 
-#[derive(PartialEq, PartialOrd, Copy, Clone)]
+#[derive(PartialEq, PartialOrd, Copy, Clone, Serialize, Deserialize)]
 pub struct Point {
     pub x: u32,
     pub y: u32,
@@ -51,6 +52,7 @@ impl Div<u32> for Point {
 }
 
 /// A bounding box is a rectangle that is defined by its bottom-left corner and its width and height.
+#[derive(Serialize, Deserialize)]
 pub struct BoundingBox {
     min: Point,
     max: Point,

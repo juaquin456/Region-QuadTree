@@ -7,9 +7,5 @@ edition = "2021"
 
 [dependencies]
 image = "0.24.7"
-winit = { version = "0.29.4", features = ["rwh_05"]}
-env_logger = "0.10"
-log = "0.4"
-wgpu = "0.18"
-tokio = {version = "1.35.0", features = ["rt-multi-thread", "macros"]}
-bytemuck = { version = "1.14.0", features = ["derive"] }
+serde = { version = "1.0.193", features = ["derive"] }
+serde-pickle = "1.1.1"

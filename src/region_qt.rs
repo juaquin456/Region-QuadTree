@@ -1,5 +1,10 @@
+use std::default::Default;
+use std::fs::File;
+use std::io::{Read, Write};
 use image::io::Reader as ImageReader;
-use image::{DynamicImage, GenericImageView, Rgba};
+use image::{DynamicImage, GenericImageView};
+use serde::{Deserialize, Serialize};
+use serde_pickle::{DeOptions, SerOptions};
 
 use primitives::BoundingBox;
 
@@ -7,10 +12,10 @@ use crate::region_qt::primitives::Point;
 
 mod primitives;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Serialize, Deserialize)]
 pub enum Color {
     Gray,
-    Data(Rgba<u8>),
+    Data([u8; 4]),
 }
 
 /// Extract the color of a pixel from an image.
@@ -24,9 +29,10 @@ pub enum Color {
 ///
 /// The color of the pixel.
 fn get_color(img: &DynamicImage, coord: (u32, u32)) -> Color {
-    Color::Data(img.get_pixel(coord.0, coord.1))
+    Color::Data(img.get_pixel(coord.0, coord.1).0)
 }
 
+#[derive(Serialize, Deserialize)]
 struct RegionNodeQt {
     data: Color,
     bounding: BoundingBox,
@@ -141,6 +147,7 @@ impl RegionNodeQt {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct RegionQt {
     root: Option<Box<RegionNodeQt>>,
 }
@@ -182,15 +189,19 @@ impl RegionQt {
         self.root.as_mut().unwrap().update(&img);
     }
 
-    pub fn write(&self) {
-        unimplemented!();
+    pub fn write(&self, name: &str) {
+        let mut file = File::create(name).unwrap();
+        file.write_all(serde_pickle::to_vec(self, SerOptions::default()).unwrap().as_slice()).unwrap()
     }
 
-    pub fn read(&mut self) {
-        unimplemented!();
-    }
+    pub fn from_file(name: &str) -> Self {
+        let mut file = File::open(name).unwrap();
+        let mut data = Vec::new();
+        file.read_to_end(&mut data).unwrap();
 
-    pub fn plot(&self) {}
+        let new_obj : RegionQt = serde_pickle::from_slice(data.as_slice(), DeOptions::default()).unwrap();
+        new_obj
+    }
 }
 
 #[cfg(test)]
@@ -199,7 +210,7 @@ mod tests {
 
     #[test]
     fn test1() {
-        let img = ImageReader::open("img/Untitled.png")
+        let img = ImageReader::open("src/img/Untitled.png")
             .expect("Can't open the file")
             .decode()
             .unwrap();
