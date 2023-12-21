@@ -7,10 +7,15 @@ mod tests {
     #[test]
     fn test1() {
         let mut tree = region_qt::RegionQt::new();
-        tree.build("src/img/Untitled.png");
-        tree.write("src/tests/1.p");
+        tree.build("img/1.png");
+        tree.write("src/tests/1.bin");
         tree.plot();
-        let tree = region_qt::RegionQt::from_file("src/tests/1.p");
-        tree.write("src/tests/2.p");
+        let dims0 = tree.dimensions();
+
+        let tree = region_qt::RegionQt::from_file("src/tests/1.bin");
+        tree.write("src/tests/2.bin");
+        let dims1 = tree.dimensions();
+
+        assert_eq!(dims0, dims1);
     }
 }

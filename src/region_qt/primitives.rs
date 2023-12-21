@@ -1,4 +1,5 @@
 use std::ops::{Add, Div, Sub};
+
 use serde::{Deserialize, Serialize};
 
 trait Contains<T> {

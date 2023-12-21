@@ -1,16 +1,11 @@
-use std::default::Default;
 use std::fs::File;
-use std::io::{Read, Write};
-use std::sync::RwLockReadGuard;
+use std::io::Read;
 use std::thread;
 
-use image::{DynamicImage, GenericImageView, RgbaImage, RgbImage};
+use image::{DynamicImage, GenericImageView, RgbaImage};
 use image::io::Reader as ImageReader;
-use piston_window::{Button, clear, Events, EventSettings, G2dTexture, Line, line, MouseButton, MouseCursorEvent, PistonWindow, PressEvent, RenderEvent, Texture, TextureSettings, WindowSettings};
-use piston_window::color::RED;
-use piston_window::types::Radius;
+use piston_window::{clear, G2dTexture, line, PistonWindow, Texture, TextureSettings, WindowSettings};
 use serde::{Deserialize, Serialize};
-use serde_pickle::{DeOptions, SerOptions};
 
 use primitives::BoundingBox;
 
@@ -154,7 +149,7 @@ impl RegionNodeQt {
 
     fn lines(&self, lines: &mut Vec<[Point; 2]>) {
         if self.is_leaf() {
-            return
+            return;
         }
 
         let center = self.bounding.center();
@@ -175,10 +170,13 @@ impl RegionNodeQt {
 
     fn set_pixel(&self, map: &mut RgbaImage) {
         if self.is_leaf() {
-            let rgba = match self.data {Color::Data(d) => {d}, Color::Gray => {[0; 4]}};
+            let rgba = match self.data {
+                Color::Data(d) => { d }
+                Color::Gray => { [0; 4] }
+            };
             for x in self.bounding.min().x..self.bounding.max().x {
                 for y in self.bounding.min().y..self.bounding.max().y {
-                map.get_pixel_mut(x, y).0 = rgba;
+                    map.get_pixel_mut(x, y).0 = rgba;
                 }
             }
         } else {
@@ -187,7 +185,6 @@ impl RegionNodeQt {
             }
         }
     }
-
 }
 
 #[derive(Serialize, Deserialize)]
@@ -197,10 +194,16 @@ pub struct RegionQt {
     height: u32,
 }
 
+impl Default for RegionQt {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RegionQt {
     /// Create a new region quadtree.
     pub fn new() -> Self {
-        RegionQt { root: None , width: 0, height: 0}
+        RegionQt { root: None, width: 0, height: 0 }
     }
 
     /// Build the region quadtree.
@@ -217,7 +220,7 @@ impl RegionQt {
     ///
     /// ```
     /// let mut tree = region_quadtree::RegionQt::new();
-    /// tree.build("src/Untitled.png");
+    /// tree.build("src/1.png");
     /// ```
     pub fn build(&mut self, path: &str) {
         let img = ImageReader::open(path)
@@ -237,16 +240,14 @@ impl RegionQt {
 
     pub fn write(&self, name: &str) {
         let mut file = File::create(name).unwrap();
-        file.write_all(serde_pickle::to_vec(self, SerOptions::default()).unwrap().as_slice()).unwrap()
+        bincode::serialize_into(&mut file, self).unwrap();
     }
 
     pub fn from_file(name: &str) -> Self {
         let mut file = File::open(name).unwrap();
         let mut data = Vec::new();
         file.read_to_end(&mut data).unwrap();
-
-        let new_obj: RegionQt = serde_pickle::from_slice(data.as_slice(), DeOptions::default()).unwrap();
-        new_obj
+        bincode::deserialize_from(&data[..]).unwrap()
     }
 
     pub fn plot(&self) {
@@ -279,23 +280,24 @@ impl RegionQt {
                     );
 
                     for l in &lines {
-                        let line_slice = [l[0].x as f64, l[0].y as f64, l[1].x as f64 , l[1].y as f64];
-                        line([0.0, 0.0, 0.0, 1.0], 0.5, line_slice, c.transform, g);
+                        let line_slice = [l[0].x as f64, l[0].y as f64, l[1].x as f64, l[1].y as f64];
+                        line([0.8, 0.6, 0.6, 1.0], 0.5, line_slice, c.transform, g);
                     }
-
                 });
-
             }
-
         }
     }
     fn get_lines(&self, lines: &mut Vec<[Point; 2]>) {
         self.root.as_ref().unwrap().lines(lines);
     }
-    fn to_rgba8(&self) -> RgbaImage {
+    pub fn to_rgba8(&self) -> RgbaImage {
         let mut t: RgbaImage = RgbaImage::new(self.width, self.height);
         self.root.as_ref().unwrap().set_pixel(&mut t);
         t
+    }
+
+    pub fn dimensions(&self) -> [u32; 2] {
+        [self.width, self.height]
     }
 }
 
@@ -305,7 +307,7 @@ mod tests {
 
     #[test]
     fn test1() {
-        let img = ImageReader::open("../img/Untitled.png")
+        let img = ImageReader::open("img/1.png")
             .expect("Can't open the file")
             .decode()
             .unwrap();
