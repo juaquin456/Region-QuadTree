@@ -1,8 +1,13 @@
 use std::default::Default;
 use std::fs::File;
 use std::io::{Read, Write};
-use image::io::Reader as ImageReader;
+use std::thread;
+
 use image::{DynamicImage, GenericImageView};
+use image::io::Reader as ImageReader;
+use piston_window::{Button, clear, Events, EventSettings, G2dTexture, Line, line, MouseButton, MouseCursorEvent, PistonWindow, PressEvent, RenderEvent, Texture, TextureSettings, WindowSettings};
+use piston_window::color::RED;
+use piston_window::types::Radius;
 use serde::{Deserialize, Serialize};
 use serde_pickle::{DeOptions, SerOptions};
 
@@ -145,17 +150,40 @@ impl RegionNodeQt {
             }
         }
     }
+
+    fn lines(&self, lines: &mut Vec<[Point; 2]>) {
+        if self.is_leaf() {
+            return
+        }
+
+        let center = self.bounding.center();
+
+        lines.push([
+            Point::from((center.x, self.bounding.min().y)),
+            Point::from((center.x, self.bounding.max().y)),
+        ]);
+        lines.push([
+            Point::from((self.bounding.min().x, center.y)),
+            Point::from((self.bounding.max().x, center.y)),
+        ]);
+
+        for child in self.children.iter().flatten() {
+            child.lines(lines);
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct RegionQt {
     root: Option<Box<RegionNodeQt>>,
+    width: u32,
+    height: u32,
 }
 
 impl RegionQt {
     /// Create a new region quadtree.
     pub fn new() -> Self {
-        RegionQt { root: None }
+        RegionQt { root: None , width: 0, height: 0}
     }
 
     /// Build the region quadtree.
@@ -180,6 +208,7 @@ impl RegionQt {
             .decode()
             .unwrap();
         let dim = img.dimensions();
+        (self.width, self.height) = dim;
 
         self.root = Some(Box::new(RegionNodeQt::new(
             Point::from((0, 0)),
@@ -199,8 +228,62 @@ impl RegionQt {
         let mut data = Vec::new();
         file.read_to_end(&mut data).unwrap();
 
-        let new_obj : RegionQt = serde_pickle::from_slice(data.as_slice(), DeOptions::default()).unwrap();
+        let new_obj: RegionQt = serde_pickle::from_slice(data.as_slice(), DeOptions::default()).unwrap();
         new_obj
+    }
+
+    pub fn plot(&self) {
+        if let Some("main") = thread::current().name() {
+            let mut window: PistonWindow = WindowSettings::new("Dibujo", [self.width, self.height])
+                .exit_on_esc(true)
+                .build()
+                .unwrap();
+
+            let mut lines: Vec<[Point; 2]> = Vec::new();
+            self.get_lines(&mut lines);
+
+            let image = image::open("src/img/test3.png").unwrap();
+
+            let texture: G2dTexture = Texture::from_image(
+                &mut window.create_texture_context(),
+                &image.to_rgba8(),
+                &TextureSettings::new(),
+            )
+                .unwrap();
+
+            while let Some(e) = window.next() {
+                window.draw_2d(&e, |c, g, _| {
+                    clear([1.0; 4], g);
+
+                    // Dibuja la imagen
+                    piston_window::image(
+                        &texture,
+                        c.transform,
+                        g,
+                    );
+                    //
+                    // // Dibuja los trazos
+                    for l in &lines {
+                        let line_slice = [l[0].x as f64, l[0].y as f64, l[1].x as f64 , l[1].y as f64];
+                        // println!("{:?}", line_slice);
+                        line([0.0, 0.0, 0.0, 1.0], 0.5, line_slice, c.transform, g);
+                    }
+                    println!("complete");
+                    //
+                    // // Dibuja el trazo actual
+                    // if current_line.len() > 1 {
+                    //     for i in 0..current_line.len() - 1 {
+                    //         line([0.0, 0.0, 0.0, 1.0], 1.0, [current_line[i][0], current_line[i][1], current_line[i + 1][0], current_line[i + 1][1]], c.transform, g);
+                    //     }
+                    // }
+                });
+
+            }
+
+        }
+    }
+    fn get_lines(&self, lines: &mut Vec<[Point; 2]>) {
+        self.root.as_ref().unwrap().lines(lines);
     }
 }
 

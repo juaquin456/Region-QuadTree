@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 image = "0.24.7"
+piston_window = "0.131.0"
 serde = { version = "1.0.193", features = ["derive"] }
 serde-pickle = "1.1.1"
