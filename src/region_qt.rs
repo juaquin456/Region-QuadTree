@@ -1,9 +1,10 @@
 use std::default::Default;
 use std::fs::File;
 use std::io::{Read, Write};
+use std::sync::RwLockReadGuard;
 use std::thread;
 
-use image::{DynamicImage, GenericImageView};
+use image::{DynamicImage, GenericImageView, RgbaImage, RgbImage};
 use image::io::Reader as ImageReader;
 use piston_window::{Button, clear, Events, EventSettings, G2dTexture, Line, line, MouseButton, MouseCursorEvent, PistonWindow, PressEvent, RenderEvent, Texture, TextureSettings, WindowSettings};
 use piston_window::color::RED;
@@ -171,6 +172,22 @@ impl RegionNodeQt {
             child.lines(lines);
         }
     }
+
+    fn set_pixel(&self, map: &mut RgbaImage) {
+        if self.is_leaf() {
+            let rgba = match self.data {Color::Data(d) => {d}, Color::Gray => {[0; 4]}};
+            for x in self.bounding.min().x..self.bounding.max().x {
+                for y in self.bounding.min().y..self.bounding.max().y {
+                map.get_pixel_mut(x, y).0 = rgba;
+                }
+            }
+        } else {
+            for child in self.children.iter().flatten() {
+                child.set_pixel(map);
+            }
+        }
+    }
+
 }
 
 #[derive(Serialize, Deserialize)]
@@ -234,7 +251,7 @@ impl RegionQt {
 
     pub fn plot(&self) {
         if let Some("main") = thread::current().name() {
-            let mut window: PistonWindow = WindowSettings::new("Dibujo", [self.width, self.height])
+            let mut window: PistonWindow = WindowSettings::new("Region QuadTree", [self.width, self.height])
                 .exit_on_esc(true)
                 .build()
                 .unwrap();
@@ -242,11 +259,11 @@ impl RegionQt {
             let mut lines: Vec<[Point; 2]> = Vec::new();
             self.get_lines(&mut lines);
 
-            let image = image::open("src/img/test3.png").unwrap();
+            let image: RgbaImage = self.to_rgba8();
 
             let texture: G2dTexture = Texture::from_image(
                 &mut window.create_texture_context(),
-                &image.to_rgba8(),
+                &image,
                 &TextureSettings::new(),
             )
                 .unwrap();
@@ -255,27 +272,17 @@ impl RegionQt {
                 window.draw_2d(&e, |c, g, _| {
                     clear([1.0; 4], g);
 
-                    // Dibuja la imagen
                     piston_window::image(
                         &texture,
                         c.transform,
                         g,
                     );
-                    //
-                    // // Dibuja los trazos
+
                     for l in &lines {
                         let line_slice = [l[0].x as f64, l[0].y as f64, l[1].x as f64 , l[1].y as f64];
-                        // println!("{:?}", line_slice);
                         line([0.0, 0.0, 0.0, 1.0], 0.5, line_slice, c.transform, g);
                     }
-                    println!("complete");
-                    //
-                    // // Dibuja el trazo actual
-                    // if current_line.len() > 1 {
-                    //     for i in 0..current_line.len() - 1 {
-                    //         line([0.0, 0.0, 0.0, 1.0], 1.0, [current_line[i][0], current_line[i][1], current_line[i + 1][0], current_line[i + 1][1]], c.transform, g);
-                    //     }
-                    // }
+
                 });
 
             }
@@ -285,6 +292,11 @@ impl RegionQt {
     fn get_lines(&self, lines: &mut Vec<[Point; 2]>) {
         self.root.as_ref().unwrap().lines(lines);
     }
+    fn to_rgba8(&self) -> RgbaImage {
+        let mut t: RgbaImage = RgbaImage::new(self.width, self.height);
+        self.root.as_ref().unwrap().set_pixel(&mut t);
+        t
+    }
 }
 
 #[cfg(test)]
@@ -293,7 +305,7 @@ mod tests {
 
     #[test]
     fn test1() {
-        let img = ImageReader::open("src/img/Untitled.png")
+        let img = ImageReader::open("../img/Untitled.png")
             .expect("Can't open the file")
             .decode()
             .unwrap();
