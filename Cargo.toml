@@ -6,7 +6,7 @@ license = "Apache-2.0"
 description = "A lightweight Region Quadtree"
 repository = "https://github.com/juaquin456/Region-QuadTree.git"
 readme = "README.md"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+exclude = ["img/*", "examples/*"]
 
 [dependencies]
 image = "0.24.7"
