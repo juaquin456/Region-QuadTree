@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read};
 use std::thread;
 
 use image::{DynamicImage, GenericImageView, RgbaImage};
@@ -215,13 +215,6 @@ impl RegionQt {
     /// # Note
     ///
     /// This function is called only once.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut tree = region_quadtree::RegionQt::new();
-    /// tree.build("src/1.png");
-    /// ```
     pub fn build(&mut self, path: &str) {
         let img = ImageReader::open(path)
             .expect("Can't open the file")
