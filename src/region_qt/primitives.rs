@@ -60,17 +60,6 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    pub(crate) fn get_bounds(&self) -> [[Point; 2]; 4] {
-        [
-            [self.min, Point::from((self.min.x, self.max.y))],
-            [Point::from((self.min.x, self.max.y)), self.max],
-            [self.max, Point::from((self.max.x, self.min.y))],
-            [Point::from((self.max.x, self.min.y)), self.min],
-        ]
-    }
-}
-
-impl BoundingBox {
     pub fn new(min: Point, max: Point) -> Self {
         assert!(min <= max);
 
