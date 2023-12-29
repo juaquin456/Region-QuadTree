@@ -168,6 +168,11 @@ impl RegionNodeQt {
         }
     }
 
+    /// Set the color of the pixels of the node.
+    ///
+    /// # Arguments
+    ///
+    /// * `map` - The image in RGBA8 format.
     fn set_pixel(&self, map: &mut RgbaImage) {
         if self.is_leaf() {
             let rgba = match self.data {
@@ -231,11 +236,25 @@ impl RegionQt {
         self.root.as_mut().unwrap().update(&img);
     }
 
+    /// Write the region quadtree to a file.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the file.
     pub fn write(&self, name: &str) {
         let mut file = File::create(name).unwrap();
         bincode::serialize_into(&mut file, self).unwrap();
     }
 
+    /// Read the region quadtree from a file.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the file.
+    ///
+    /// # Return
+    ///
+    /// The region quadtree.
     pub fn from_file(name: &str) -> Self {
         let mut file = File::open(name).unwrap();
         let mut data = Vec::new();
@@ -243,6 +262,8 @@ impl RegionQt {
         bincode::deserialize_from(&data[..]).unwrap()
     }
 
+
+    /// Plot the region quadtree.
     pub fn plot(&self) {
         if let Some("main") = thread::current().name() {
             let mut window: PistonWindow = WindowSettings::new("Region QuadTree", [self.width, self.height])
@@ -283,6 +304,12 @@ impl RegionQt {
     fn get_lines(&self, lines: &mut Vec<[Point; 2]>) {
         self.root.as_ref().unwrap().lines(lines);
     }
+
+    /// Convert the region quadtree to an image.
+    ///
+    /// # Return
+    ///
+    /// The image in RGBA8 format.
     pub fn to_rgba8(&self) -> RgbaImage {
         let mut t: RgbaImage = RgbaImage::new(self.width, self.height);
         self.root.as_ref().unwrap().set_pixel(&mut t);
